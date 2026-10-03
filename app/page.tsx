@@ -1,93 +1,91 @@
+"use client";
+
 import { Header } from "@/components/storefront/Header";
 import { Footer } from "@/components/storefront/Footer";
 import { ProductCard } from "@/components/storefront/ProductCard";
 import { FlashSaleCountdown } from "@/components/storefront/FlashSaleCountdown";
 import { Zap, ChevronRight, Store, ArrowRight, ShieldCheck, Ticket } from "lucide-react";
 import Link from "next/link";
-import { Product } from "@/types";
+import { useCategories, useProducts, usePlatformVouchers, useFlashSaleSlots } from "@/lib/api";
+import { useActiveSlotsRealtime } from "@/lib/realtime/flashsale-ws";
+import { useState } from "react";
+import type { ProductSummary } from "@/types";
 
-const MOCK_FLASH_SALE_PRODUCTS: Product[] = [
+const MOCK_FALLBACK_PRODUCTS: ProductSummary[] = [
   {
-    id: "fs-1",
-    name: "Tai nghe Bluetooth không dây VibeSound Pro Chống ồn Active Noise Cancelling",
-    price: 790000,
-    originalPrice: 1450000,
-    discountPercentage: 45,
-    image: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=600&q=80",
-    rating: 4.9,
-    soldCount: 170,
-    totalStock: 200,
-    category: "Electronics",
-    isFlashSale: true,
+    id: 0, storeId: 0, storeName: "", categoryId: 0, categoryName: "",
+    name: "Tai nghe Bluetooth VibeSound Pro Active Noise Cancelling",
+    imageUrl: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=600&q=80",
+    minPrice: 790000, maxPrice: 1450000, totalStock: 200, status: "ACTIVE", createdAt: "",
   },
   {
-    id: "fs-2",
-    name: "Nồi chiên không dầu điện tử VibeCook 5.5L 8 chế độ nấu tự động",
-    price: 999000,
-    originalPrice: 1890000,
-    discountPercentage: 47,
-    image: "https://images.unsplash.com/photo-1585515320310-259814833e62?auto=format&fit=crop&w=600&q=80",
-    rating: 4.8,
-    soldCount: 95,
-    totalStock: 100,
-    category: "Home",
-    isFlashSale: true,
+    id: 0, storeId: 0, storeName: "", categoryId: 0, categoryName: "",
+    name: "Nồi chiên không dầu VibeCook 5.5L",
+    imageUrl: "https://images.unsplash.com/photo-1585515320310-259814833e62?auto=format&fit=crop&w=600&q=80",
+    minPrice: 999000, maxPrice: 1890000, totalStock: 100, status: "ACTIVE", createdAt: "",
   },
   {
-    id: "fs-3",
-    name: "Bình giữ nhiệt Inox 304 dung tích 750ml giữ nóng lạnh 24H",
-    price: 199000,
-    originalPrice: 420000,
-    discountPercentage: 52,
-    image: "https://images.unsplash.com/photo-1602143407151-7111542de6e8?auto=format&fit=crop&w=600&q=80",
-    rating: 4.9,
-    soldCount: 220,
-    totalStock: 250,
-    category: "Home",
-    isFlashSale: true,
+    id: 0, storeId: 0, storeName: "", categoryId: 0, categoryName: "",
+    name: "Bình giữ nhiệt Inox 304 750ml",
+    imageUrl: "https://images.unsplash.com/photo-1602143407151-7111542de6e8?auto=format&fit=crop&w=600&q=80",
+    minPrice: 199000, maxPrice: 420000, totalStock: 250, status: "ACTIVE", createdAt: "",
   },
   {
-    id: "fs-4",
-    name: "Đồng hồ thông minh thế hệ mới VibeFit Active AMOLED IP68",
-    price: 509000,
-    originalPrice: 1190000,
-    discountPercentage: 57,
-    image: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=600&q=80",
-    rating: 4.7,
-    soldCount: 150,
-    totalStock: 150,
-    category: "Electronics",
-    isFlashSale: true,
+    id: 0, storeId: 0, storeName: "", categoryId: 0, categoryName: "",
+    name: "Đồng hồ thông minh VibeFit Active AMOLED",
+    imageUrl: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=600&q=80",
+    minPrice: 509000, maxPrice: 1190000, totalStock: 150, status: "ACTIVE", createdAt: "",
   },
   {
-    id: "fs-5",
-    name: "Giày thể thao êm chân nhẹ thoáng khí VibeRunner Unisex",
-    price: 465000,
-    originalPrice: 890000,
-    discountPercentage: 47,
-    image: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=600&q=80",
-    rating: 4.9,
-    soldCount: 180,
-    totalStock: 200,
-    category: "Fashion",
-    isFlashSale: true,
-  },
-  {
-    id: "fs-6",
-    name: "Bàn phím cơ không dây RGB switch nhận diện cực nhạy",
-    price: 690000,
-    originalPrice: 1350000,
-    discountPercentage: 48,
-    image: "https://images.unsplash.com/photo-1587829741301-dc798b83add3?auto=format&fit=crop&w=600&q=80",
-    rating: 4.9,
-    soldCount: 88,
-    totalStock: 100,
-    category: "Electronics",
-    isFlashSale: true,
+    id: 0, storeId: 0, storeName: "", categoryId: 0, categoryName: "",
+    name: "Giày thể thao VibeRunner Unisex",
+    imageUrl: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=600&q=80",
+    minPrice: 465000, maxPrice: 890000, totalStock: 200, status: "ACTIVE", createdAt: "",
   },
 ];
 
 export default function StorefrontHomePage() {
+  const { data: slots } = useFlashSaleSlots();
+  const { data: categories } = useCategories();
+  const { data: productsData } = useProducts({ page: 0, size: 10 });
+  const { data: vouchers } = usePlatformVouchers();
+
+  // Active slot (Flash Sale đang diễn ra)
+  const activeSlot = slots?.find((s) => s.status === "ACTIVE") ?? null;
+  const activeSlotItems = activeSlot?.items.slice(0, 6) ?? [];
+
+  // State cho realtime stock của items trong slot active
+  const [realtimeItems, setRealtimeItems] = useState<
+    Map<number, { availableStock: number }>
+  >(new Map());
+
+  useActiveSlotsRealtime(
+    activeSlot ? [activeSlot.id] : [],
+    (event) => {
+      if (
+        event.eventType === "STOCK_DECREMENTED" ||
+        event.eventType === "STOCK_RESTORED"
+      ) {
+        if (event.flashSaleItemId !== undefined) {
+          setRealtimeItems((prev) => {
+            const next = new Map(prev);
+            next.set(event.flashSaleItemId!, {
+              availableStock: event.availableStock ?? 0,
+            });
+            return next;
+          });
+        }
+      }
+    }
+  );
+
+  const getItemWithRealtime = (item: (typeof activeSlotItems)[0]) => {
+    const realtime = realtimeItems.get(item.id);
+    if (realtime) {
+      return { ...item, availableStock: realtime.availableStock };
+    }
+    return item;
+  };
   return (
     <div className="min-h-screen flex flex-col bg-slate-50 text-gray-800">
       <Header />
@@ -179,28 +177,37 @@ export default function StorefrontHomePage() {
             <Link href="#" className="text-[11px] font-semibold text-sky-600 hover:underline">Xem tất cả</Link>
           </div>
           <div className="grid grid-cols-4 sm:grid-cols-8 gap-3 text-center">
-            {[
-              "Thời trang nam", "Thời trang nữ", "Điện thoại", "Máy tính", "Thiết bị điện tử", "Nhà cửa", "Sắc đẹp", "Sức khỏe",
-              "Thể thao", "Sách báo", "Đồ chơi", "Đồng hồ", "Giày dép", "Túi xách", "Trang sức", "Phụ kiện"
-            ].map((cat, i) => (
-              <div key={i} className="p-2 rounded-xl hover:bg-slate-50 cursor-pointer transition-colors flex flex-col items-center gap-1">
+            {(categories ?? []).slice(0, 16).map((cat) => (
+              <div key={cat.id} className="p-2 rounded-xl hover:bg-slate-50 cursor-pointer transition-colors flex flex-col items-center gap-1">
                 <div className="w-10 h-10 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center font-bold text-xs">
-                  {cat[0]}
+                  {cat.name[0]?.toUpperCase() ?? "?"}
                 </div>
-                <span className="text-[10px] text-gray-600 font-medium line-clamp-1">{cat}</span>
+                <span className="text-[10px] text-gray-600 font-medium line-clamp-1">{cat.name}</span>
               </div>
             ))}
+            {(!categories || categories.length === 0) &&
+              ["Thời trang nam", "Thời trang nữ", "Điện thoại", "Máy tính", "Thiết bị điện tử", "Nhà cửa", "Sắc đẹp", "Sức khỏe",
+               "Thể thao", "Sách báo", "Đồ chơi", "Đồng hồ", "Giày dép", "Túi xách", "Trang sức", "Phụ kiện"].map((cat, i) => (
+                <div key={i} className="p-2 rounded-xl hover:bg-slate-50 cursor-pointer transition-colors flex flex-col items-center gap-1">
+                  <div className="w-10 h-10 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center font-bold text-xs">
+                    {cat[0]}
+                  </div>
+                  <span className="text-[10px] text-gray-600 font-medium line-clamp-1">{cat}</span>
+                </div>
+              ))
+            }
           </div>
         </section>
 
         {/* Flash Sale Section */}
+        {activeSlot && activeSlotItems.length > 0 && (
         <section className="bg-white rounded-2xl p-4 border border-gray-200 space-y-4 shadow-2xs">
           <div className="flex items-center justify-between border-b border-gray-100 pb-3">
             <div className="flex items-center gap-3">
               <span className="text-rose-600 font-black text-lg flex items-center gap-1 uppercase tracking-tight">
                 ⚡ FLASH SALE
               </span>
-              <FlashSaleCountdown initialSeconds={4200} />
+              <FlashSaleCountdown endTime={activeSlot.endTime} />
             </div>
             <Link href="/flash-sales" className="text-xs font-bold text-rose-600 hover:underline">
               Xem tất cả &gt;
@@ -208,32 +215,58 @@ export default function StorefrontHomePage() {
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
-            {MOCK_FLASH_SALE_PRODUCTS.map((p) => (
-              <ProductCard key={p.id} product={p} />
+            {activeSlotItems.map((item) => (
+              <ProductCard
+                key={item.id}
+                product={getItemWithRealtime(item)}
+                slotId={activeSlot.id}
+              />
             ))}
           </div>
         </section>
+        )}
 
         {/* Voucher Cards */}
         <section className="space-y-3">
           <h2 className="text-sm font-bold text-gray-900 uppercase tracking-wider">Mã giảm giá cho bạn</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
-            {[
-              { label: "Giảm 100K", desc: "Cho đơn từ 500K", code: "VIBE100K", bg: "bg-sky-700 text-white" },
-              { label: "Giảm 15%", desc: "Cho đơn từ 200K", code: "VIBE15", bg: "bg-emerald-700 text-white" },
-              { label: "Freeship 30K", desc: "Đơn bất kỳ", code: "FREESHIP30", bg: "bg-teal-700 text-white" },
-              { label: "Giảm 50%", desc: "Khách hàng mới", code: "WELCOME50", bg: "bg-rose-700 text-white" },
-            ].map((v, i) => (
-              <div key={i} className={`${v.bg} rounded-xl p-3 flex justify-between items-center shadow-2xs`}>
+            {(vouchers ?? []).slice(0, 4).map((v) => (
+              <div key={v.id} className="bg-sky-700 text-white rounded-xl p-3 flex justify-between items-center shadow-2xs">
                 <div>
-                  <span className="font-extrabold text-sm block">{v.label}</span>
-                  <span className="text-[10px] opacity-80">{v.desc}</span>
+                  <span className="font-extrabold text-sm block">
+                    {v.discountType === "PERCENT"
+                      ? `Giảm ${v.discountValue}%`
+                      : `Giảm ${v.discountValue.toLocaleString("vi-VN")}K`}
+                  </span>
+                  <span className="text-[10px] opacity-80">
+                    {v.minOrderAmount ? `Cho đơn từ ${v.minOrderAmount.toLocaleString("vi-VN")}đ` : "Không giới hạn"}
+                    {v.maxDiscountAmount ? ` - Tối đa ${v.maxDiscountAmount.toLocaleString("vi-VN")}đ` : ""}
+                  </span>
+                  <span className="text-[10px] block opacity-60 mt-0.5">Mã: {v.code}</span>
                 </div>
                 <button className="bg-white text-gray-900 font-bold text-[10px] px-3 py-1 rounded-md hover:bg-gray-100">
                   Lưu mã
                 </button>
               </div>
             ))}
+            {(!vouchers || vouchers.length === 0) &&
+              [
+                { label: "Giảm 100K", desc: "Cho đơn từ 500K", code: "VIBE100K", bg: "bg-sky-700 text-white" },
+                { label: "Giảm 15%", desc: "Cho đơn từ 200K", code: "VIBE15", bg: "bg-emerald-700 text-white" },
+                { label: "Freeship 30K", desc: "Đơn bất kỳ", code: "FREESHIP30", bg: "bg-teal-700 text-white" },
+                { label: "Giảm 50%", desc: "Khách hàng mới", code: "WELCOME50", bg: "bg-rose-700 text-white" },
+              ].map((v, i) => (
+                <div key={i} className={`${v.bg} rounded-xl p-3 flex justify-between items-center shadow-2xs`}>
+                  <div>
+                    <span className="font-extrabold text-sm block">{v.label}</span>
+                    <span className="text-[10px] opacity-80">{v.desc}</span>
+                  </div>
+                  <button className="bg-white text-gray-900 font-bold text-[10px] px-3 py-1 rounded-md hover:bg-gray-100">
+                    Lưu mã
+                  </button>
+                </div>
+              ))
+            }
           </div>
         </section>
 
@@ -249,9 +282,15 @@ export default function StorefrontHomePage() {
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
-            {MOCK_FLASH_SALE_PRODUCTS.slice(0, 5).map((p) => (
-              <ProductCard key={`rec-${p.id}`} product={p} />
+            {(productsData?.items ?? []).map((p) => (
+              <ProductCard key={p.id} product={p} />
             ))}
+            {/* Fallback nếu API chưa có data */}
+            {(!productsData || productsData.items.length === 0) &&
+              MOCK_FALLBACK_PRODUCTS.map((p, idx) => (
+                <ProductCard key={`mock-${idx}`} product={p} />
+              ))
+            }
           </div>
 
           <div className="text-center pt-2">

@@ -1,17 +1,71 @@
+"use client";
+
 import Link from "next/link";
-import { Product } from "@/types";
+import { useState } from "react";
 import { Zap } from "lucide-react";
+import { FlashSaleItem, ProductSummary } from "@/types";
+import { useItemRealtime } from "@/lib/realtime/flashsale-ws";
 
 interface ProductCardProps {
-  product: Product;
+  product: ProductSummary | FlashSaleItem;
+  slotId?: number;
 }
 
-export function ProductCard({ product }: ProductCardProps) {
-  const percentageSold = Math.min(
-    100,
-    Math.round((product.soldCount / product.totalStock) * 100)
+// Normalize ProductSummary | FlashSaleItem → unified shape
+export function normalizeProduct(
+  item: ProductSummary | FlashSaleItem,
+  slotId?: number
+) {
+  const isFlashSale = "flashSalePrice" in item;
+  const price = isFlashSale ? (item as FlashSaleItem).flashSalePrice : (item as ProductSummary).minPrice;
+  const originalPrice = isFlashSale
+    ? (item as FlashSaleItem).originalPrice
+    : (item as ProductSummary).maxPrice;
+  const totalStock = isFlashSale ? (item as FlashSaleItem).allocatedStock : (item as ProductSummary).totalStock;
+  const soldCount = isFlashSale
+    ? (item as FlashSaleItem).allocatedStock - (item as FlashSaleItem).availableStock
+    : 0; // (mock)
+  const image = isFlashSale ? (item as FlashSaleItem).imageUrl : (item as ProductSummary).imageUrl;
+  const productId = (item as ProductSummary).id;
+  const itemId = isFlashSale ? (item as FlashSaleItem).id : null;
+  const name = isFlashSale ? (item as FlashSaleItem).productName : (item as ProductSummary).name;
+  const discount = originalPrice > 0 ? Math.round((1 - price / originalPrice) * 100) : 0;
+
+  return {
+    price,
+    originalPrice,
+    totalStock,
+    soldCount,
+    image,
+    isFlashSale,
+    productId,
+    itemId,
+    name,
+    discount,
+    slotId: isFlashSale ? (item as FlashSaleItem).slotId : slotId,
+  };
+}
+
+export function ProductCard({ product, slotId }: ProductCardProps) {
+  const normalized = normalizeProduct(product, slotId);
+  const { price, originalPrice, totalStock, soldCount, image, isFlashSale, productId, itemId, name, discount } =
+    normalized;
+
+  // Real-time stock update via WebSocket
+  const [availableStock, setAvailableStock] = useState(
+    isFlashSale ? (product as FlashSaleItem).availableStock : totalStock
   );
-  const isOutOfStock = product.soldCount >= product.totalStock;
+
+  useItemRealtime(itemId, (stock) => {
+    setAvailableStock(stock);
+  });
+
+  const currentSold = isFlashSale ? totalStock - availableStock : soldCount;
+  const percentageSold = totalStock > 0 ? Math.min(100, Math.round((currentSold / totalStock) * 100)) : 0;
+  const isOutOfStock = availableStock <= 0;
+
+  // Convert productId to string for Link
+  const idStr = String(productId);
 
   return (
     <div className="bg-white border border-gray-200 rounded-xl p-3 flex flex-col justify-between hover:shadow-lg transition-all duration-200 relative group">
@@ -21,15 +75,15 @@ export function ProductCard({ product }: ProductCardProps) {
           <Zap className="w-3 h-3 fill-current" /> FLASH SALE
         </span>
         <span className="bg-rose-50 text-rose-600 font-extrabold text-[10px] px-1.5 py-0.5 rounded-xs border border-rose-200">
-          -{product.discountPercentage}%
+          -{discount}%
         </span>
       </div>
 
       {/* Product Image */}
       <div className="relative aspect-square w-full rounded-lg overflow-hidden bg-slate-50 mb-2">
         <img
-          src={product.image}
-          alt={product.name}
+          src={image}
+          alt={name}
           className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-300"
           loading="lazy"
         />
@@ -42,17 +96,17 @@ export function ProductCard({ product }: ProductCardProps) {
 
       {/* Title */}
       <h3 className="font-medium text-gray-800 text-xs line-clamp-2 min-h-[32px] mb-2 hover:text-rose-600 transition-colors">
-        {product.name}
+        {name}
       </h3>
 
       {/* Price */}
       <div className="mt-auto space-y-2">
         <div className="flex items-baseline gap-2">
           <span className="text-base font-black text-rose-600">
-            {product.price.toLocaleString("vi-VN")}đ
+            {price.toLocaleString("vi-VN")}đ
           </span>
           <span className="text-[11px] text-gray-400 line-through">
-            {product.originalPrice.toLocaleString("vi-VN")}đ
+            {originalPrice.toLocaleString("vi-VN")}đ
           </span>
         </div>
 
@@ -65,7 +119,7 @@ export function ProductCard({ product }: ProductCardProps) {
             ></div>
           </div>
           <div className="text-[10px] text-rose-600 font-semibold text-center">
-            🔥 {isOutOfStock ? "Đã bán hết" : `Đã bán ${percentageSold}% - Chỉ còn ${product.totalStock - product.soldCount} sản phẩm`}
+            🔥 {isOutOfStock ? "Đã bán hết" : `Đã bán ${percentageSold}% - Chỉ còn ${availableStock} sản phẩm`}
           </div>
         </div>
 
@@ -79,11 +133,11 @@ export function ProductCard({ product }: ProductCardProps) {
           </button>
         ) : (
           <Link
-            href={`/flash-sales/${product.id}`}
+            href={`/flash-sales/${idStr}`}
             className="w-full bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs py-2 rounded-lg text-center transition-colors flex items-center justify-center gap-1 shadow-xs"
           >
             <Zap className="w-3.5 h-3.5 fill-current" />
-            Mua ngay
+            {isFlashSale ? "Mua ngay" : "Mua ngay (mock)"}
           </Link>
         )}
       </div>

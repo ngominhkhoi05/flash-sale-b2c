@@ -33,6 +33,7 @@ function VerifyEmailContent() {
             MỞ TRANG ĐẶT LẠI MẬT KHẨU (DEMO)
           </Link>
 
+          {/* (mock) - Backend chưa có endpoint resend email */}
           <button
             onClick={() => alert("Đã gửi lại email xác thực!")}
             className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-3 rounded-xl transition-all text-xs flex items-center justify-center gap-2"
