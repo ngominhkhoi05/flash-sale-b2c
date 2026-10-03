@@ -4,19 +4,28 @@ import Link from "next/link";
 import { useState } from "react";
 import { Eye, EyeOff, Zap, Package, CreditCard, ShoppingBag, Gift, AlertCircle } from "lucide-react";
 import { VibeMartLogo } from "@/components/ui/VibeMartLogo";
+import { useLogin } from "@/lib/api/auth";
+import { ApiError } from "@/lib/api/client";
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
-  const [email, setEmail] = useState("nguyen.van.an@gmail.com");
-  const [password, setPassword] = useState("12345678");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(true);
-  const [hasError, setHasError] = useState(true);
+
+  const loginMutation = useLogin();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setHasError(false);
-    alert(`Đăng nhập thành công với tài khoản: ${email}`);
+    loginMutation.mutate({ usernameOrEmail: email, password });
   };
+
+  const errorMessage =
+    loginMutation.error instanceof ApiError
+      ? loginMutation.error.message
+      : loginMutation.error
+      ? "Đã xảy ra lỗi, vui lòng thử lại."
+      : null;
 
   return (
     <div className="min-h-screen bg-slate-50/60 flex flex-col justify-between font-sans text-gray-800">
@@ -136,10 +145,8 @@ export default function LoginPage() {
                       required
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      placeholder="12345678"
-                      className={`w-full bg-white border ${
-                        hasError ? "border-rose-500" : "border-gray-300"
-                      } rounded-xl px-4 py-2.5 text-xs text-gray-900 focus:outline-hidden focus:border-sky-600 transition-all pr-10`}
+                      placeholder="Nhập mật khẩu"
+                      className="w-full bg-white border border-gray-300 rounded-xl px-4 py-2.5 text-xs text-gray-900 focus:outline-hidden focus:border-sky-600 focus:ring-2 focus:ring-sky-100 transition-all"
                     />
                     <button
                       type="button"
@@ -151,10 +158,10 @@ export default function LoginPage() {
                   </div>
                 </div>
 
-                {hasError && (
+                {errorMessage && (
                   <div className="flex items-center gap-1.5 text-[11px] text-rose-600 font-medium pt-0.5">
                     <AlertCircle className="w-3.5 h-3.5 shrink-0" />
-                    <span>Email hoặc mật khẩu chưa đúng</span>
+                    <span>{errorMessage}</span>
                   </div>
                 )}
 
@@ -175,9 +182,10 @@ export default function LoginPage() {
 
                 <button
                   type="submit"
-                  className="w-full bg-sky-800 hover:bg-sky-900 text-white font-bold py-3 rounded-xl shadow-md transition-colors text-xs uppercase tracking-wider"
+                  disabled={loginMutation.isPending}
+                  className="w-full bg-sky-800 hover:bg-sky-900 text-white font-bold py-3 rounded-xl shadow-md transition-colors text-xs uppercase tracking-wider disabled:opacity-60 disabled:cursor-not-allowed"
                 >
-                  Đăng nhập
+                  {loginMutation.isPending ? "Đang đăng nhập..." : "Đăng nhập"}
                 </button>
               </form>
 

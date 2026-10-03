@@ -10,6 +10,8 @@ export default function ForgotPasswordPage() {
   const [hasError, setHasError] = useState(true);
   const router = useRouter();
 
+  // (mock) - Backend chưa có endpoint /auth/forgot-password
+  // Khi backend có endpoint thì thay thế bằng useForgotPassword() mutation
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setHasError(false);

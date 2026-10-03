@@ -1,0 +1,127 @@
+/**
+ * API fetch wrapper with JWT auto-injection, 401 refresh-token retry.
+ */
+
+const API_BASE =
+  process.env.NEXT_PUBLIC_API_BASE ?? "http://localhost:8080/api/v1";
+const AUTH_KEY = "vibemart.auth";
+
+export function toNumber(value: unknown): number {
+  if (typeof value === "number") return value;
+  if (typeof value === "string") {
+    const n = parseFloat(value.replace(/,/g, ""));
+    return isNaN(n) ? 0 : n;
+  }
+  return 0;
+}
+
+export interface StoredTokens {
+  accessToken: string;
+  refreshToken: string;
+}
+
+export function getAccessToken(): string | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = localStorage.getItem(AUTH_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as StoredTokens;
+    return parsed.accessToken ?? null;
+  } catch {
+    return null;
+  }
+}
+
+export function getRefreshToken(): string | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = localStorage.getItem(AUTH_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as StoredTokens;
+    return parsed.refreshToken ?? null;
+  } catch {
+    return null;
+  }
+}
+
+export function setTokens(accessToken: string, refreshToken: string): void {
+  if (typeof window === "undefined") return;
+  localStorage.setItem(
+    AUTH_KEY,
+    JSON.stringify({ accessToken, refreshToken }),
+  );
+}
+
+export function clearTokens(): void {
+  if (typeof window === "undefined") return;
+  localStorage.removeItem(AUTH_KEY);
+}
+
+export class ApiError extends Error {
+  code?: number;
+  constructor(message: string, code?: number) {
+    super(message);
+    this.name = "ApiError";
+    this.code = code;
+  }
+}
+
+async function doRefresh(): Promise<boolean> {
+  const refresh = getRefreshToken();
+  if (!refresh) return false;
+  try {
+    const res = await fetch(API_BASE + "/auth/refresh-token", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ refreshToken: refresh }),
+    });
+    if (!res.ok) return false;
+    const json = await res.json();
+    if (json.success && json.data?.accessToken) {
+      setTokens(json.data.accessToken, json.data.refreshToken ?? refresh);
+      return true;
+    }
+    return false;
+  } catch {
+    return false;
+  }
+}
+
+export async function apiFetch<T>(
+  path: string,
+  options: RequestInit & { skipAuth?: boolean } = {},
+): Promise<T> {
+  const { skipAuth = false, ...fetchOpts } = options;
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    ...((fetchOpts.headers as Record<string, string>) ?? {}),
+  };
+  if (!skipAuth) {
+    const token = getAccessToken();
+    if (token) headers["Authorization"] = "Bearer " + token;
+  }
+  const makeRequest = (): Promise<Response> =>
+    fetch(API_BASE + path, { ...fetchOpts, headers });
+
+  let res = await makeRequest();
+  if (res.status === 401 && !skipAuth) {
+    const refreshed = await doRefresh();
+    if (refreshed) {
+      const token = getAccessToken();
+      if (token) headers["Authorization"] = "Bearer " + token;
+      res = await makeRequest();
+    } else {
+      clearTokens();
+      if (typeof window !== "undefined") window.location.href = "/login";
+      throw new ApiError(
+        "Phien dang nhap het han, vui long dang nhap lai.",
+        401,
+      );
+    }
+  }
+  const raw = await res.json().catch(() => ({}));
+  if (!raw.success) {
+    throw new ApiError(raw.message ?? "Loi khong xac dinh", res.status);
+  }
+  return raw.data as T;
+}

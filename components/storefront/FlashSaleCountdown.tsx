@@ -5,10 +5,24 @@ import { Clock } from "lucide-react";
 
 interface CountdownProps {
   initialSeconds?: number;
+  endTime?: string; // ISO date string
 }
 
-export function FlashSaleCountdown({ initialSeconds = 7200 }: CountdownProps) {
-  const [timeLeft, setTimeLeft] = useState(initialSeconds);
+export function FlashSaleCountdown({ initialSeconds = 7200, endTime }: CountdownProps) {
+  const getInitialSeconds = () => {
+    if (endTime) {
+      const diff = Math.floor((new Date(endTime).getTime() - Date.now()) / 1000);
+      return Math.max(0, diff);
+    }
+    return initialSeconds;
+  };
+
+  const [timeLeft, setTimeLeft] = useState(getInitialSeconds);
+
+  // Re-init when endTime changes
+  useEffect(() => {
+    setTimeLeft(getInitialSeconds());
+  }, [endTime]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     const timer = setInterval(() => {

@@ -3,26 +3,49 @@
 import Link from "next/link";
 import { useState } from "react";
 import { Eye, EyeOff, Zap, Package, CreditCard, ShoppingBag, Gift } from "lucide-react";
+import { useRegister } from "@/lib/api/auth";
+import { ApiError } from "@/lib/api/client";
 
 export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
-    fullName: "Nguyễn Văn An",
-    email: "nguyen.van.an@gmail.com",
-    phone: "912 345 678",
-    password: "VibeMart@2026",
-    confirmPassword: "VibeMart@2026",
-    agreeTerms: true,
+    fullName: "",
+    email: "",
+    phone: "",
+    password: "",
+    confirmPassword: "",
+    agreeTerms: false,
   });
+  const [localError, setLocalError] = useState<string | null>(null);
+
+  const registerMutation = useRegister();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setLocalError(null);
+
     if (formData.password !== formData.confirmPassword) {
-      alert("Mật khẩu xác nhận không khớp!");
+      setLocalError("Mật khẩu xác nhận không khớp!");
       return;
     }
-    alert(`Đăng ký thành công tài khoản: ${formData.email}`);
+    if (!formData.agreeTerms) {
+      setLocalError("Bạn cần đồng ý với Điều khoản dịch vụ.");
+      return;
+    }
+
+    registerMutation.mutate({
+      email: formData.email,
+      password: formData.password,
+      fullName: formData.fullName,
+      phone: formData.phone,
+      role: "BUYER",
+    });
   };
+
+  const apiError =
+    registerMutation.error instanceof ApiError
+      ? registerMutation.error.message
+      : null;
 
   return (
     <div className="min-h-screen bg-slate-50/60 flex flex-col justify-between font-sans text-gray-800">
@@ -259,11 +282,19 @@ export default function RegisterPage() {
                   </label>
                 </div>
 
+                {localError && (
+                  <div className="text-[11px] text-rose-600 font-medium">{localError}</div>
+                )}
+                {apiError && (
+                  <div className="text-[11px] text-rose-600 font-medium">{apiError}</div>
+                )}
+
                 <button
                   type="submit"
-                  className="w-full bg-sky-800 hover:bg-sky-900 text-white font-bold py-2.5 rounded-xl shadow-md transition-colors text-xs uppercase tracking-wider flex items-center justify-center gap-1"
+                  disabled={registerMutation.isPending}
+                  className="w-full bg-sky-800 hover:bg-sky-900 text-white font-bold py-2.5 rounded-xl shadow-md transition-colors text-xs uppercase tracking-wider flex items-center justify-center gap-1 disabled:opacity-60 disabled:cursor-not-allowed"
                 >
-                  Đăng ký →
+                  {registerMutation.isPending ? "Đang đăng ký..." : "Đăng ký →"}
                 </button>
               </form>
 

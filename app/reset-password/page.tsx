@@ -11,6 +11,8 @@ export default function ResetPasswordPage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const router = useRouter();
 
+  // (mock) - Backend chưa có endpoint /auth/reset-password
+  // Khi backend có endpoint thì thay thế bằng useResetPassword() mutation
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (password !== confirmPassword) {
