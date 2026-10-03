@@ -1,0 +1,58 @@
+@import "../css/light.css";
+@import "../css/dark.css";
+@import "../css/light-hc.css";
+@import "../css/light-mc.css";
+@import "../css/dark-hc.css";
+@import "../css/dark-mc.css";
+
+@import "tailwindcss";
+
+:root {
+  --md-sys-color-primary: rgb(101 85 143);
+  --md-sys-color-surface-tint: rgb(103 80 164);
+  --md-sys-color-on-primary: rgb(255 255 255);
+  --md-sys-color-primary-container: rgb(234 221 255);
+  --md-sys-color-on-primary-container: rgb(79 55 139);
+  --md-sys-color-secondary: rgb(98 91 113);
+  --md-sys-color-on-secondary: rgb(255 255 255);
+  --md-sys-color-secondary-container: rgb(232 222 248);
+  --md-sys-color-on-secondary-container: rgb(74 68 88);
+  --md-sys-color-tertiary: rgb(125 82 96);
+  --md-sys-color-on-tertiary: rgb(255 255 255);
+  --md-sys-color-tertiary-container: rgb(255 216 228);
+  --md-sys-color-on-tertiary-container: rgb(99 59 72);
+  --md-sys-color-error: rgb(179 38 30);
+  --md-sys-color-on-error: rgb(255 255 255);
+  --md-sys-color-error-container: rgb(249 222 220);
+  --md-sys-color-on-error-container: rgb(140 29 24);
+  --md-sys-color-background: rgb(254 247 255);
+  --md-sys-color-on-background: rgb(29 27 32);
+  --md-sys-color-surface: rgb(254 247 255);
+  --md-sys-color-on-surface: rgb(29 27 32);
+  --md-sys-color-surface-variant: rgb(231 224 236);
+  --md-sys-color-on-surface-variant: rgb(73 69 79);
+  --md-sys-color-outline: rgb(121 116 126);
+  --md-sys-color-outline-variant: rgb(202 196 208);
+
+  --background: var(--md-sys-color-background);
+  --foreground: var(--md-sys-color-on-background);
+}
+
+@theme {
+  --color-primary-md: var(--md-sys-color-primary);
+  --color-on-primary-md: var(--md-sys-color-on-primary);
+  --color-primary-container-md: var(--md-sys-color-primary-container);
+  --color-on-primary-container-md: var(--md-sys-color-on-primary-container);
+  --color-secondary-md: var(--md-sys-color-secondary);
+  --color-tertiary-md: var(--md-sys-color-tertiary);
+  --color-surface-md: var(--md-sys-color-surface);
+  --color-on-surface-md: var(--md-sys-color-on-surface);
+  --color-background-md: var(--md-sys-color-background);
+  --color-on-background-md: var(--md-sys-color-on-background);
+}
+
+body {
+  background-color: var(--md-sys-color-background);
+  color: var(--md-sys-color-on-background);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+}
