@@ -1,0 +1,62 @@
+# ===================================================================
+# .dockerignore cho Frontend (Next.js)
+# ===================================================================
+# Giam build context tu ~300MB xuong con ~10MB.
+# ===================================================================
+
+### --- Node modules (se duoc cai lai trong container) ---
+node_modules/
+.pnp
+.pnp.js
+.yarn/
+
+### --- Next.js build output (se duoc tao lai) ---
+.next/
+out/
+.turbo/
+.cache/
+
+### --- IDE / Editor ---
+.idea/
+.vscode/
+*.iml
+*.iws
+*.ipr
+.history/
+
+### --- Env files (CHUA SECRET) ---
+.env
+.env.*
+.env.local
+.env.development
+.env.production
+!.env.example
+
+### --- Test & Coverage ---
+coverage/
+.nyc_output/
+*.lcov
+test-results/
+
+### --- Logs ---
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+### --- OS junk ---
+.DS_Store
+Thumbs.db
+
+### --- Git ---
+.git/
+.gitignore
+.gitattributes
+
+### --- Docker artifacts ---
+docker-compose*.yml
+Dockerfile*
+.dockerignore
+deploy/
