@@ -93,9 +93,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = useCallback(
     (accessToken: string, refreshToken: string, user: AuthUser) => {
+      // IMPORTANT: setTokensInStorage must run BEFORE saveToStorage, because
+      // setTokensInStorage writes {accessToken, refreshToken} only (no user).
+      // If saveToStorage runs first, setTokensInStorage will overwrite and
+      // remove the user from localStorage, causing the header to lose the
+      // user info after page refresh (F5).
+      setTokensInStorage(accessToken, refreshToken);
       const data = { accessToken, refreshToken, user };
       saveToStorage(data);
-      setTokensInStorage(accessToken, refreshToken);
       setState({
         user,
         accessToken,

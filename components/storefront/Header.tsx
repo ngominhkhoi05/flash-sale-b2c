@@ -1,14 +1,19 @@
 "use client";
 
 import Link from "next/link";
-import { Search, ShoppingBag, User, Phone, Bell, HelpCircle } from "lucide-react";
+import { Search, ShoppingBag, User, Phone, Bell, HelpCircle, LogOut, Package } from "lucide-react";
 import { useState } from "react";
 import { usePathname } from "next/navigation";
 import { VibeMartLogo } from "@/components/ui/VibeMartLogo";
+import { useAuth } from "@/lib/auth/store";
+import { useLogout } from "@/lib/api/auth";
 
 export function Header() {
   const [searchQuery, setSearchQuery] = useState("");
   const pathname = usePathname();
+  const { user, isAuthenticated } = useAuth();
+  const logoutMutation = useLogout();
+  const [menuOpen, setMenuOpen] = useState(false);
 
   return (
     <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
@@ -87,15 +92,78 @@ export function Header() {
 
           <div className="h-6 w-px bg-gray-200"></div>
 
-          <Link href="/login" className="flex items-center gap-2 text-xs text-gray-700 hover:text-sky-600 transition-colors">
-            <div className="w-7 h-7 rounded-full bg-slate-200 flex items-center justify-center text-gray-600 font-bold text-xs">
-              <User className="w-4 h-4" />
+          {isAuthenticated && user ? (
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setMenuOpen((v) => !v)}
+                onBlur={() => setTimeout(() => setMenuOpen(false), 150)}
+                className="flex items-center gap-2 text-xs text-gray-700 hover:text-sky-600 transition-colors"
+              >
+                <div className="w-7 h-7 rounded-full bg-sky-200 flex items-center justify-center text-sky-700 font-bold text-xs uppercase">
+                  {user.avatarUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={user.avatarUrl}
+                      alt={user.fullName}
+                      className="w-7 h-7 rounded-full object-cover"
+                    />
+                  ) : (
+                    user.fullName?.[0] ?? <User className="w-4 h-4" />
+                  )}
+                </div>
+                <div className="flex flex-col text-left max-w-[120px]">
+                  <span className="text-[10px] text-gray-400">Xin chào</span>
+                  <span className="font-semibold text-gray-900 leading-tight text-xs truncate">
+                    {user.fullName || "Tài khoản"}
+                  </span>
+                </div>
+              </button>
+
+              {menuOpen && (
+                <div className="absolute right-0 top-full mt-2 w-52 bg-white border border-gray-200 rounded-lg shadow-lg py-1 z-50">
+                  <div className="px-3 py-2 border-b border-gray-100">
+                    <p className="text-xs font-semibold text-gray-900 truncate">{user.fullName}</p>
+                    <p className="text-[11px] text-gray-500 truncate">{user.email}</p>
+                  </div>
+                  <Link
+                    href="/profile"
+                    className="flex items-center gap-2 px-3 py-2 text-xs text-gray-700 hover:bg-slate-50"
+                  >
+                    <User className="w-3.5 h-3.5" /> Hồ sơ của tôi
+                  </Link>
+                  <Link
+                    href="/orders"
+                    className="flex items-center gap-2 px-3 py-2 text-xs text-gray-700 hover:bg-slate-50"
+                  >
+                    <Package className="w-3.5 h-3.5" /> Đơn hàng của tôi
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => logoutMutation.mutate()}
+                    disabled={logoutMutation.isPending}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-xs text-rose-600 hover:bg-rose-50 disabled:opacity-50"
+                  >
+                    <LogOut className="w-3.5 h-3.5" />
+                    {logoutMutation.isPending ? "Đang đăng xuất..." : "Đăng xuất"}
+                  </button>
+                </div>
+              )}
             </div>
-            <div className="flex flex-col text-left">
-              <span className="font-semibold text-gray-900 leading-tight text-xs">Tài khoản</span>
-              <span className="text-[10px] text-gray-400">Đăng nhập</span>
-            </div>
-          </Link>
+          ) : (
+            <Link
+              href="/login"
+              className="flex items-center gap-2 text-xs text-gray-700 hover:text-sky-600 transition-colors"
+            >
+              <div className="w-7 h-7 rounded-full bg-slate-200 flex items-center justify-center text-gray-600 font-bold text-xs">
+                <User className="w-4 h-4" />
+              </div>
+              <div className="flex flex-col text-left">
+                <span className="font-semibold text-gray-900 leading-tight text-xs">Tài khoản</span>
+                <span className="text-[10px] text-gray-400">Đăng nhập</span>
+              </div>
+            </Link>
+          )}
         </div>
       </div>
 
